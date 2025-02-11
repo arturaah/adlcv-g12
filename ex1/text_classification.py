@@ -42,7 +42,7 @@ def prepare_data_iter(sampled_ratio=0.2, batch_size=16):
     return train_iter, test_iter
 
 
-def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
+def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=2,
          pos_enc='fixed', pool='max', dropout=0.0, fc_dim=None,
          batch_size=16, lr=1e-4, warmup_steps=625, 
          weight_decay=1e-4, gradient_clipping=1
@@ -114,11 +114,11 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
 
     
     params = {
-    "embed_dim": model.embed_dim,
-    "num_heads": model.num_heads,
-    "num_layers": model.num_layers,
-    "pos_enc": str(model.pos_enc),  
-    "pool": str(model.pool)
+    "embed_dim": embed_dim,
+    "num_heads": num_heads,
+    "num_layers": num_layers,
+    "pos_enc": str(pos_enc),  
+    "pool": str(pool)
 }
 
 
