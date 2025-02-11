@@ -114,12 +114,12 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
 
     
     params = {
-    "embed_dim": model.embed_dim,
-    "num_heads": model.num_heads,
-    "num_layers": model.num_layers,
-    "pos_enc": str(model.pos_enc),  
-    "pool": str(model.pool)
-}
+    "embed_dim": embed_dim,
+    "num_heads": num_heads,
+    "num_layers": num_layers,
+    "pos_enc": pos_enc,  
+    "pool": pool
+    }
 
 
     if os.path.exists("evaluation.json"):
