@@ -113,10 +113,14 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
             print(f'-- {"validation"} accuracy {acc:.3}')
 
     
-    params = {key: getattr(model, key) for key in [
-        "embed_dim", "num_heads", "num_layers", "pos_enc", "pool", 
-        "dropout", "fc_dim", "max_seq_len", "num_tokens", "num_classes"
-    ] if hasattr(model, key)}
+    params = {
+    "embed_dim": model.embed_dim,
+    "num_heads": model.num_heads,
+    "num_layers": model.num_layers,
+    "pos_enc": str(model.pos_enc),  
+    "pool": str(model.pool)
+}
+
 
     if os.path.exists("evaluation.json"):
         with open("evaluation.json", "r") as f:
