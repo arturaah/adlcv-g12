@@ -171,7 +171,7 @@ class TransformerClassifier(nn.Module):
         ####################### insert code here #######################
         if self.pool == 'cls':
             # HINT: repeat the cls token of the batch dimension
-            tokens = repeat(tokens, 'b s e -> ([CLS] b) s e', b=1)
+            tokens = repeat(self.cls_token, '() n d -> b n d', b=batch_size) + tokens
         ################################################################
 
         x = self.positional_encoding(tokens)

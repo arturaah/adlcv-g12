@@ -1,0 +1,30 @@
+method: grid
+name: text_classification_sweep
+metric:
+  name: val_loss
+  goal: minimize
+parameters:
+  pool: 
+    values: [max, mean, cls]
+  pos_enc: 
+    values: [fixed]
+  num_layers: 
+    values: [4]
+  num_heads: 
+    values: [4]
+  embed_dim:
+    values: [128]
+  num_epochs:
+    values: [20]
+  dropout:
+    values: [0.0]
+  batch_size:
+    values: [16]
+  lr:
+    values: [1e-4]
+  warmup_steps:
+    values: [625]
+  weight_decay:
+    values: [1e-4]
+  gradient_clipping:
+    values: [1.0]

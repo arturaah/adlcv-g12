@@ -3,3 +3,5 @@ einops
 seaborn
 tqdm
 torchtext==0.6.0
+pyyaml
+wandb
