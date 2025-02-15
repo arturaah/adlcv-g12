@@ -66,65 +66,65 @@ def train():
         sweep_config = wandb.config
         run.name= f"layers_{sweep_config.num_layers}, heads_{sweep_config.num_heads}, pos_enc_{sweep_config.pos_enc}, pool_{sweep_config.pool}"
 
-    loss_function = nn.CrossEntropyLoss()
+        loss_function = nn.CrossEntropyLoss()
 
-    train_iter, test_iter, _, _ = prepare_dataloaders(batch_size=sweep_config.batch_size)
+        train_iter, test_iter, _, _ = prepare_dataloaders(batch_size=sweep_config.batch_size)
 
-    model = ViT(image_size=(32,32), patch_size=(4,4), channels=sweep_config.channels, 
-                embed_dim=sweep_config.embed_dim, num_heads=sweep_config.num_heads, num_layers=sweep_config.num_layers,
-                pos_enc=sweep_config.pos_enc, pool=sweep_config.pool, dropout=sweep_config.dropout, fc_dim=None, 
-                num_classes=sweep_config.num_classes
-    )
+        model = ViT(image_size=(32,32), patch_size=(4,4), channels=sweep_config.channels, 
+                    embed_dim=sweep_config.embed_dim, num_heads=sweep_config.num_heads, num_layers=sweep_config.num_layers,
+                    pos_enc=sweep_config.pos_enc, pool=sweep_config.pool, dropout=sweep_config.dropout, fc_dim=None, 
+                    num_classes=sweep_config.num_classes
+        )
 
-    if torch.cuda.is_available():
-        model = model.to('cuda')
+        if torch.cuda.is_available():
+            model = model.to('cuda')
 
-    opt = torch.optim.AdamW(lr=sweep_config.lr, params=model.parameters(), weight_decay=sweep_config.weight_decay)
-    sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / sweep_config.warmup_steps, 1.0))
-    
-    # training loop
-    best_val_loss = 1e10
-    for e in range(sweep_config.num_epochs):
-        print(f'\n epoch {e}')
-        model.train()
-        train_loss = 0
-        for image, label in tqdm.tqdm(train_iter):
-            if torch.cuda.is_available():
-                image, label = image.to('cuda'), label.to('cuda')
-            opt.zero_grad()
-            out = model(image)
-            loss = loss_function(out, label)
-            loss.backward()
-            train_loss += loss.item()
-            # if the total gradient vector has a length > 1, we clip it back down to 1.
-            if sweep_config.gradient_clipping > 0.0:
-                nn.utils.clip_grad_norm_(model.parameters(), sweep_config.gradient_clipping)
-            opt.step()
-            sch.step()
-
-        train_loss/=len(train_iter)
-
-        val_loss = 0
-        with torch.no_grad():
-            model.eval()
-            tot, cor= 0.0, 0.0
-            for image, label in test_iter:
+        opt = torch.optim.AdamW(lr=sweep_config.lr, params=model.parameters(), weight_decay=sweep_config.weight_decay)
+        sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / sweep_config.warmup_steps, 1.0))
+        
+        # training loop
+        best_val_loss = 1e10
+        for e in range(sweep_config.num_epochs):
+            print(f'\n epoch {e}')
+            model.train()
+            train_loss = 0
+            for image, label in tqdm.tqdm(train_iter):
                 if torch.cuda.is_available():
                     image, label = image.to('cuda'), label.to('cuda')
+                opt.zero_grad()
                 out = model(image)
                 loss = loss_function(out, label)
-                val_loss += loss.item()
-                out = out.argmax(dim=1)
-                tot += float(image.size(0))
-                cor += float((label == out).sum().item())
-            acc = cor / tot
-            val_loss /= len(test_iter)
-            wandb.log({"epoch": e, "val acc": acc, "val_loss" :val_loss})
+                loss.backward()
+                train_loss += loss.item()
+                # if the total gradient vector has a length > 1, we clip it back down to 1.
+                if sweep_config.gradient_clipping > 0.0:
+                    nn.utils.clip_grad_norm_(model.parameters(), sweep_config.gradient_clipping)
+                opt.step()
+                sch.step()
 
-            print(f'-- train loss {train_loss:.3f} -- validation accuracy {acc:.3f} -- validation loss: {val_loss:.3f}')
-            if val_loss <= best_val_loss:
-                torch.save(model.state_dict(), 'model.pth')
-                best_val_loss = val_loss
+            train_loss/=len(train_iter)
+
+            val_loss = 0
+            with torch.no_grad():
+                model.eval()
+                tot, cor= 0.0, 0.0
+                for image, label in test_iter:
+                    if torch.cuda.is_available():
+                        image, label = image.to('cuda'), label.to('cuda')
+                    out = model(image)
+                    loss = loss_function(out, label)
+                    val_loss += loss.item()
+                    out = out.argmax(dim=1)
+                    tot += float(image.size(0))
+                    cor += float((label == out).sum().item())
+                acc = cor / tot
+                val_loss /= len(test_iter)
+                wandb.log({"epoch": e, "val acc": acc, "val_loss" :val_loss})
+
+                print(f'-- train loss {train_loss:.3f} -- validation accuracy {acc:.3f} -- validation loss: {val_loss:.3f}')
+                if val_loss <= best_val_loss:
+                    torch.save(model.state_dict(), 'model.pth')
+                    best_val_loss = val_loss
     wandb.finish()
 def main():
     wandb.finish()
