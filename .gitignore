@@ -3,3 +3,5 @@ adlcv-ex1/data/
 wandb
 /adlcv-ex2/model.pth
 __pycache__
+training_error.log
+training_output.log
