@@ -110,7 +110,7 @@ def train():
     wandb.finish()
 
 def main():
-    with open("../configs/text_sweep.yaml", "r") as f:
+    with open("configs/text_sweep.yaml", "r") as f:
         sweep_config = yaml.safe_load(f)
 
     sweep_id = wandb.sweep(sweep_config, project="transformer_text_classification")

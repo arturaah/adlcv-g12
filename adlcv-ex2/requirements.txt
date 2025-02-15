@@ -2,3 +2,4 @@ matplotlib
 einops
 seaborn
 tqdm
+torchvision

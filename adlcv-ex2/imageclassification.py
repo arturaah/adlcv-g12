@@ -125,7 +125,7 @@ def train():
                 best_val_loss = val_loss
 
 def main():
-    with open("../configs/image_sweep.yaml", "r") as f:
+    with open("configs/image_sweep.yaml", "r") as f:
         sweep_config = yaml.safe_load(f)
 
     sweep_id = wandb.sweep(sweep_config, project="image_classification")
