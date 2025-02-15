@@ -81,7 +81,7 @@ def train():
 
     opt = torch.optim.AdamW(lr=sweep_config.lr, params=model.parameters(), weight_decay=sweep_config.weight_decay)
     sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / sweep_config.warmup_steps, 1.0))
-
+    
     # training loop
     best_val_loss = 1e10
     for e in range(sweep_config.num_epochs):
@@ -119,12 +119,15 @@ def train():
                 cor += float((label == out).sum().item())
             acc = cor / tot
             val_loss /= len(test_iter)
+            wandb.log({"epoch": e, "val acc": acc, "val_loss" :val_loss})
+
             print(f'-- train loss {train_loss:.3f} -- validation accuracy {acc:.3f} -- validation loss: {val_loss:.3f}')
             if val_loss <= best_val_loss:
                 torch.save(model.state_dict(), 'model.pth')
                 best_val_loss = val_loss
-
+    wandb.finish()
 def main():
+    wandb.finish()
     with open("configs/image_sweep.yaml", "r") as f:
         sweep_config = yaml.safe_load(f)
 
