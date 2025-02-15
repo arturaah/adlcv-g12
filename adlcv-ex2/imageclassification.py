@@ -5,11 +5,12 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import tqdm
-
+import wandb
 import torch
 import torchvision
 import torchvision.transforms as transforms
 from vit import ViT
+import yaml
 
 def set_seed(seed=1):
     random.seed(seed)
@@ -60,33 +61,30 @@ def prepare_dataloaders(batch_size, classes=[3, 7]):
     return trainloader, testloader, trainset, testset
 
 
-def main(image_size=(32,32), patch_size=(4,4), channels=3, 
-         embed_dim=128, num_heads=4, num_layers=4, num_classes=2,
-         pos_enc='learnable', pool='cls', dropout=0.3, fc_dim=None, 
-         num_epochs=20, batch_size=16, lr=1e-4, warmup_steps=625,
-         weight_decay=1e-3, gradient_clipping=1
-         
-    ):
+def train():
+    with wandb.init() as run:
+        sweep_config = wandb.config
+        run.name= f"layers_{sweep_config.num_layers}, heads_{sweep_config.num_heads}, pos_enc_{sweep_config.pos_enc}, pool_{sweep_config.pool}"
 
     loss_function = nn.CrossEntropyLoss()
 
-    train_iter, test_iter, _, _ = prepare_dataloaders(batch_size=batch_size)
+    train_iter, test_iter, _, _ = prepare_dataloaders(batch_size=sweep_config.batch_size)
 
-    model = ViT(image_size=image_size, patch_size=patch_size, channels=channels, 
-                embed_dim=embed_dim, num_heads=num_heads, num_layers=num_layers,
-                pos_enc=pos_enc, pool=pool, dropout=dropout, fc_dim=fc_dim, 
-                num_classes=num_classes
+    model = ViT(image_size=(32,32), patch_size=(4,4), channels=sweep_config.channels, 
+                embed_dim=sweep_config.embed_dim, num_heads=sweep_config.num_heads, num_layers=sweep_config.num_layers,
+                pos_enc=sweep_config.pos_enc, pool=sweep_config.pool, dropout=sweep_config.dropout, fc_dim=None, 
+                num_classes=sweep_config.num_classes
     )
 
     if torch.cuda.is_available():
         model = model.to('cuda')
 
-    opt = torch.optim.AdamW(lr=lr, params=model.parameters(), weight_decay=weight_decay)
-    sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / warmup_steps, 1.0))
+    opt = torch.optim.AdamW(lr=sweep_config.lr, params=model.parameters(), weight_decay=sweep_config.weight_decay)
+    sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / sweep_config.warmup_steps, 1.0))
 
     # training loop
     best_val_loss = 1e10
-    for e in range(num_epochs):
+    for e in range(sweep_config.num_epochs):
         print(f'\n epoch {e}')
         model.train()
         train_loss = 0
@@ -99,8 +97,8 @@ def main(image_size=(32,32), patch_size=(4,4), channels=3,
             loss.backward()
             train_loss += loss.item()
             # if the total gradient vector has a length > 1, we clip it back down to 1.
-            if gradient_clipping > 0.0:
-                nn.utils.clip_grad_norm_(model.parameters(), gradient_clipping)
+            if sweep_config.gradient_clipping > 0.0:
+                nn.utils.clip_grad_norm_(model.parameters(), sweep_config.gradient_clipping)
             opt.step()
             sch.step()
 
@@ -126,6 +124,12 @@ def main(image_size=(32,32), patch_size=(4,4), channels=3,
                 torch.save(model.state_dict(), 'model.pth')
                 best_val_loss = val_loss
 
+def main():
+    with open("../configs/image_sweep.yaml", "r") as f:
+        sweep_config = yaml.safe_load(f)
+
+    sweep_id = wandb.sweep(sweep_config, project="image_classification")
+    wandb.agent(sweep_id, function=train)
 
 if __name__ == "__main__":
     #os.environ["CUDA_VISIBLE_DEVICES"]= str(0)

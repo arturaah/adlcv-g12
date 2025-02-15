@@ -1,0 +1,5 @@
+adlcv-ex2/data/
+adlcv-ex1/data/
+wandb
+/adlcv-ex2/model.pth
+__pycache__

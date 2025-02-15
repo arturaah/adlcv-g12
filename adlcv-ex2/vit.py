@@ -166,3 +166,4 @@ class ViT(nn.Module):
             x = x[:, 0]
 
         return self.classifier(x)
+    
