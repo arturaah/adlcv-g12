@@ -6,5 +6,5 @@ data/
 
 *.pth
 
-ex2/data/
-ex2/model.pth
+/ex2/data/
+/ex2/model.pth
