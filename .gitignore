@@ -1,5 +1,12 @@
+/ex1/data
 /ex1/.data
 .data/
 /.data/
+data/
 
 /ex2/.data
+/ex2/model.pth
+ex2/model.pth
+*.pth
+/ex2/data/
+/ex2/data
