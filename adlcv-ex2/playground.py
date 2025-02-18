@@ -46,16 +46,15 @@ def image_to_patches(image, patch_size, image_grid=True):
         """
         patches = rearrange(patches, 'b c num_patches_h patch_h num_patches_w patch_w -> b (num_patches_h num_patches_w) c patch_h patch_w', 
                     num_patches_h=num_patches_h, num_patches_w=num_patches_w)
+    else:
         """
         Again split the image to patches but flatten each patch. 
         Output Dimensions should be: 
         B x (num_patches_h*num_patches_w ) x (C ( patch_h * patch_w)
         """
-        patches = rearrange(patches, 'b (num_patches_h num_patches_w) c patch_h patch_w -> b (num_patches_h num_patches_w) (c patch_h patch_w)', 
+        patches = rearrange(patches, 'b c (num_patches_h patch_h) (num_patches_w patch_w) -> b (num_patches_h num_patches_w) (c patch_h patch_w)', 
                     num_patches_h=num_patches_h, num_patches_w=num_patches_w)
-    else:
-        patches = rearrange(image, 'b c (num_patches_h patch_h) (num_patches_w patch_w) -> b (num_patches_h num_patches_w) (c patch_h patch_w)', 
-                        num_patches_h=num_patches_h, num_patches_w=num_patches_w, patch_h=patch_h, patch_w=patch_w)
+    
         assert patches.size()== (batch_size, num_patches , (patch_h * patch_w * C))
     return patches
 
