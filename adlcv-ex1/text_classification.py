@@ -6,7 +6,6 @@ from torch import nn
 import torch.nn.functional as F
 from torchtext import data, datasets, vocab
 import tqdm
-import json
 
 from transformer import TransformerClassifier, to_device
 
@@ -75,7 +74,6 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
     opt = torch.optim.AdamW(lr=lr, params=model.parameters(), weight_decay=weight_decay)
     sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / warmup_steps, 1.0))
 
-    val_acc= []
     # training loop
     for e in range(num_epochs):
         print(f'\n epoch {e}')
@@ -88,8 +86,8 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
             if seq_len > MAX_SEQ_LEN:
                 input_seq = input_seq[:, :MAX_SEQ_LEN]
             out = model(input_seq)
-            loss = loss_function(out, label)
-            loss.backward()
+            loss = ... # compute loss
+            ... # backward
             # if the total gradient vector has a length > 1, we clip it back down to 1.
             if gradient_clipping > 0.0:
                 nn.utils.clip_grad_norm_(model.parameters(), gradient_clipping)
@@ -109,33 +107,7 @@ def main(embed_dim=128, num_heads=4, num_layers=4, num_epochs=20,
                 tot += float(input_seq.size(0))
                 cor += float((label == out).sum().item())
             acc = cor / tot
-            val_acc.append(acc)
             print(f'-- {"validation"} accuracy {acc:.3}')
-
-    
-    params = {
-    "embed_dim": model.embed_dim,
-    "num_heads": model.num_heads,
-    "num_layers": model.num_layers,
-    "pos_enc": str(model.pos_enc),  
-    "pool": str(model.pool)
-}
-
-
-    if os.path.exists("evaluation.json"):
-        with open("evaluation.json", "r") as f:
-            try:
-                data = json.load(f)  
-            except json.JSONDecodeError:
-                data = [] 
-    else:
-        data = []  
-
-    data.append({"model_params": params, "validation_accuracy": val_acc})
-
-    with open("evaluation.json", "w") as f:
-        json.dump(data, f, indent=4)
-
 
 
 if __name__ == "__main__":

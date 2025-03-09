@@ -73,10 +73,10 @@ if __name__ == '__main__':
     test_attention(batch_size=8, seq_len=512, embed_dim=128, device='cpu')
     print(45*'-')
 
-    # print()
-    # print('test PositionalEncoding')
-    # test_positional_encoding()
-    # print()
+    print()
+    print('test PositionalEncoding')
+    test_positional_encoding()
+    print()
 
     print()
     print('test TransformerClassifier implementation')

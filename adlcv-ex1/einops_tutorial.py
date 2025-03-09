@@ -16,6 +16,7 @@ print('Swap batch with the channels', a2.shape)
 a3 = rearrange(a1, 'b c h w -> (b c) h w')
 print('Merge batch with channels', a3.shape)
 
+
 # Split the batch to two dimensions
 a4 = rearrange(a1, '(d1 d2) c h w -> d1 d2 c h w', d1=16,d2=2)
 print('Split the batch to two dimensions', a4.shape)

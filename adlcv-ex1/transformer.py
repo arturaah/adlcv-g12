@@ -38,22 +38,22 @@ class Attention(nn.Module):
         Now you have to split the projected keys, queries, and values to multiple heads.
         """
         # First split the embed_dim to num_heads x head_dim
-        keys = rearrange(keys, 'b s (h d) -> b h s d', h=self.num_heads, d=self.head_dim)
+        keys = ...
         # Secondly merge the batch_size with the num_heads
-        keys = rearrange(keys, 'b h s d -> (b h) s d')
+        keys = ...
         
         # HINT repeat the same process for queries and values
-        queries = rearrange(queries, 'b s (h d) -> b h s d', h=self.num_heads, d=self.head_dim)
-        queries = rearrange(queries, 'b h s d -> (b h) s d')
+        queries = ...
+        queries = ...
 
-        values = rearrange(values, 'b s (h d) -> b h s d', h=self.num_heads, d=self.head_dim)
-        values = rearrange(values, 'b h s d -> (b h) s d')
+        values = ...
+        values = ...
 
-        # Compute attention logits
-        attention_logits = torch.matmul(queries, keys.transpose(-2, -1))  # multiply queries and keys
+        # Compute attetion logits
+        attention_logits = ... # multiply queries and keys
         attention_logits = attention_logits * self.scale
-        attention = nn.Softmax(dim=-1)(attention_logits) # apply softmax to the last dimension
-        out = torch.matmul(attention, values) # multiply the attention with values
+        attention = ... # softmax on attention
+        out = ... # multiply attention with values
 
         # Rearragne output
         # from (batch_size x num_head) x seq_length x head_dim to batch_size x seq_length x embed_dim
@@ -102,11 +102,11 @@ class PositionalEncoding(nn.Module):
         # get half of the embedding indices
         div_term = torch.arange(0., embed_dim, 2)
         # miltiply each position with -(math.log(10000.0) / embed_dim)
-        div_term = -(math.log(10000.0) / embed_dim) * div_term
+        div_term = ...
         # compute the exp of div_term
-        div_term = torch.exp(div_term)
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        div_term = ...
+        pe[:, ...] = ... # HINT use torch.sin to assign to the even-positions the position * div_term
+        pe[:, ...] = ... # HINT use torch.cos to assign to the odd-positions the position * div_term
 
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
@@ -145,7 +145,7 @@ class TransformerClassifier(nn.Module):
 
         # Initialize cls token parameter
         if self.pool == 'cls':
-            self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
+            #self.cls_token = ... # Institate an nn.Parameter with size: 1,1,embed_dim
             max_seq_len +=1
         
         if self.pos_enc == 'fixed':
@@ -171,7 +171,7 @@ class TransformerClassifier(nn.Module):
         ####################### insert code here #######################
         if self.pool == 'cls':
             # HINT: repeat the cls token of the batch dimension
-            tokens = repeat(tokens, 'b s e -> ([CLS] b) s e', b=1)
+            pass
         ################################################################
 
         x = self.positional_encoding(tokens)
@@ -187,7 +187,7 @@ class TransformerClassifier(nn.Module):
         ####################### insert code here #######################
         elif self.pool == 'cls':
             # HINT: get the first output token of the transfomer.
-            x = x[:, 0, :]
+            pass
         ################################################################
 
         return self.classifier(x)
