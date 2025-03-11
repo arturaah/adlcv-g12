@@ -5,3 +5,6 @@ wandb
 __pycache__
 training_error.log
 training_output.log
+runs/
+models
+weights
