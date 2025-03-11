@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 adlcv-ex2/data/
 adlcv-ex1/.data/
 wandb
@@ -8,3 +9,8 @@ training_output.log
 runs/
 models
 weights
+=======
+/ex1/.data
+.data/
+/.data/
+>>>>>>> main
