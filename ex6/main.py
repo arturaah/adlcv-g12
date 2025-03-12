@@ -42,8 +42,8 @@ logger = get_logger(__name__, log_level="INFO")
 CONFIG = {
     "pretrained_model": "stabilityai/stable-diffusion-2",
     "what_to_teach": "object",  # Choose between "object" or "style"
-    "placeholder_token": "<my-concept>",  # The token you'll use to trigger your concept
-    "initializer_token": "toy",  # A word that describes your concept
+    "placeholder_token": "<mate>",  # The token you'll use to trigger your concept
+    "initializer_token": "mug",  # A word that describes your concept
     "learning_rate": 5e-04,
     "scale_lr": True,  
     "max_train_steps": 500,  # should be 2000
@@ -53,7 +53,7 @@ CONFIG = {
     "gradient_checkpointing": True,
     "mixed_precision": "fp16",
     "seed": 42,
-    "concept_folder": "buzz", # TODO: Change this to your concept folder,  sec 1.1 Concept Preparation
+    "concept_folder": "mate", # TODO: Change this to your concept folder,  sec 1.1 Concept Preparation
 }
 # Automatically set output_dir based on concept_folder
 CONFIG["output_dir"] = "output_" + CONFIG["concept_folder"].rstrip("/") + "/"
@@ -224,16 +224,28 @@ def training_function(text_encoder, vae, unet, tokenizer, placeholder_token_id):
    ### 
    ### You need to:
    ### 1. Loop through epochs and batches
-   ### 2. Process images through VAE to get latents
-   ### 3. Add noise to latents using the noise scheduler
-   ### 4. Get text embeddings from the text encoder
-   ### 5. Predict noise with UNet and calculate loss
-   ### 6. Update only the embeddings for the placeholder token
-   ### 7. Save checkpoints at specified intervals
-   ###
-   ### Refer to the main.py file for implementation details
-   # ...
-   #########################################################
+    for epoch in range(num_train_epochs):
+        for batch in train_dataloader:
+           #process images through VAE to get latents
+            images = batch["image"].to(accelerator.device)
+            latents = vae.encode(images)
+            #add noise to latents using the noise scheduler
+            noise_level = noise_scheduler.get_noise_level(global_step, num_update_steps_per_epoch)
+            latents = latents + noise_level * torch.randn_like(latents)
+            #get text embeddings from the text encoder
+            texts = batch["text"]
+            text_inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to(accelerator.device)
+            text_embeds = text_encoder.get_text_features(text_inputs.input_ids).last_hidden_state
+            #predict noise with UNet and calculate loss
+            predicted_noise = unet(latents, text_embeds)
+            loss = F.mse_loss(predicted_noise, latents)
+            #update only the embeddings for the placeholder token
+            accelerator.backward(loss)
+            optimizer.step()
+            optimizer.zero_grad()
+            #save checkpoints at specified intervals
+            global_step += 1
+            progress_bar.update(1)
     
     logger.info(f"Training completed. Peak GPU memory usage: {peak_memory:.2f}GB")
 
@@ -317,6 +329,39 @@ def main():
     # This helps evaluate how well your model learned the concept.
     #
     # 1. First, load the trained pipeline from your output directory
+    #1.load the trained pipeline from the output directory
+    pipeline = StableDiffusionPipeline.from_pretrained(CONFIG["output_dir"])
+    #2. Configure the DPMSolverMultistepScheduler for efficient sampling
+    solver = DPMSolverMultistepScheduler.from_pretrained(CONFIG["pretrained_model"], subfolder="scheduler")
+    #3. Move the model to GPU using the .to("cuda") method
+    pipeline.to("cuda")
+    solver.to("cuda")
+    #4. Create a test prompt that includes your placeholder token
+    test_prompt = "A picture of a <mate>."
+    #5. Generate a small batch of images (2 samples is sufficient)
+    batch_size = 2
+    with torch.no_grad():
+        samples = pipeline.sample_text_prompt(
+            test_prompt,
+            solver=solver,
+            num_inference_steps=30,
+            guidance_scale=8.0,
+            batch_size=batch_size,
+        )
+    #6. Arrange the generated images in a grid for easy viewing
+    generated_images = []
+    for sample in samples:
+        img = Image.fromarray((sample * 255).astype(np.uint8))
+        generated_images.append(img)
+    rows = 1
+    cols = len(generated_images)
+    generated_grid = image_grid(generated_images, rows, cols)
+    #7. Save the grid to your output directory
+    generated_grid_path = os.path.join(CONFIG["output_dir"], "generated_images_grid.png")
+    generated_grid.save(generated_grid_path)
+    print(f"Generated images grid saved to {generated_grid_path}")
+   
+
     # 2. Configure the DPMSolverMultistepScheduler for efficient sampling
     # 3. Move the model to GPU using the .to("cuda") method
     # 4. Create a test prompt that includes your placeholder token
